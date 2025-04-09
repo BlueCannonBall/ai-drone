@@ -1,25 +1,31 @@
 import time, cv2
-from threading import Thread
 from djitellopy import Tello
+from threading import Thread
+import keyboard
+from manual_controls import ManualControls
 
-tello = Tello()
-
+tello = Tello(retry_count=10)
 tello.connect()
 
-keepRecording = True
 tello.streamon()
 frame_read = tello.get_frame_read()    
 
 tello.takeoff()
 
-while keepRecording:
+kill_switch = ManualControls(tello)
+keyboard.hook(kill_switch.on_key_event)
+
+def movements():
+    tello.move_up(100)
+    tello.rotate_counter_clockwise(360)
+    tello.land()
+
+movement_thread = Thread(target=movements)
+movement_thread.start()
+
+while True:
     cv2.imshow('frame', frame_read.frame)
-    #video.write(frame_read.frame)
     if cv2.waitKey(1) == ord('q'):
         break
 
-tello.move_up(100)
-tello.rotate_counter_clockwise(360)
-tello.land()
-
-keepRecording = False
+movement_thread.join()
