@@ -1,1 +1,4 @@
 djitellopy
+bitstring
+crcmod
+opencv-python
