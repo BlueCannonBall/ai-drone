@@ -16,7 +16,7 @@ kill_switch = ManualControls(tello)
 keyboard.hook(kill_switch.on_key_event)
 
 def movements():
-    tello.move_up(100)
+    tello.move_up(200)
     tello.rotate_counter_clockwise(360)
     tello.land()
 
@@ -24,7 +24,8 @@ movement_thread = Thread(target=movements)
 movement_thread.start()
 
 while True:
-    cv2.imshow('frame', frame_read.frame)
+    frame_bgr = cv2.cvtColor(frame_read.frame, cv2.COLOR_RGB2BGR)
+    cv2.imshow('frame', frame_bgr)
     if cv2.waitKey(1) == ord('q'):
         break
 
