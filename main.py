@@ -4,7 +4,7 @@ from threading import Thread
 import keyboard
 from manual_controls import ManualControls
 
-tello = Tello(retry_count=10)
+tello = Tello(retry_count=8)
 tello.connect()
 
 tello.streamon()
@@ -16,12 +16,22 @@ kill_switch = ManualControls(tello)
 keyboard.hook(kill_switch.on_key_event)
 
 def movements():
-    tello.move_up(200)
+    tello.move_up(50)
+    time.sleep(3)
     tello.rotate_counter_clockwise(360)
+    time.sleep(3)
     tello.land()
 
 movement_thread = Thread(target=movements)
 movement_thread.start()
+
+def battery_percent():
+    if (tello.get_battery() < 20):
+        tello.land()
+        return "Low Battery, needs to be changed"
+    
+battery_thread = Thread(target=battery_percent)
+battery_thread.start()
 
 while True:
     frame_bgr = cv2.cvtColor(frame_read.frame, cv2.COLOR_RGB2BGR)
