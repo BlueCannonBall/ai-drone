@@ -29,7 +29,7 @@ def battery_percent():
     while True:
         if (tello.get_battery() < 20):
             tello.land()
-            return "Low Battery, needs to be changed"
+            print("Low Battery, needs to be changed")
         time.sleep(5) # Check the battery every 5 seconds
     
 battery_thread = Thread(target=battery_percent, daemon=True)
