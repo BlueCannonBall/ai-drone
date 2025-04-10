@@ -1,2 +1,5 @@
 djitellopy
+bitstring
+crcmod
+opencv-python
 keyboard
