@@ -10,11 +10,11 @@ me.connect()
 
 me.streamon()
 me.takeoff()
-me.send_rc_control(0, 0, 35, 0)
+me.send_rc_control(0, 0, 37, 0)
 time.sleep(2.2)
 
 w, h = 360, 240
-fbrange = [6000,10000]
+fbrange = [5000,10000]
 pid = [0.4, 0.4, 0]
 pError = 0
 
@@ -45,6 +45,7 @@ def trackface(me, info, w, pid, pError):
     fb = 0
     x, y = info[0]
 
+    global error
     error = x - w//2
 
     speed = 0
@@ -52,24 +53,24 @@ def trackface(me, info, w, pid, pError):
     if area > fbrange[0] and area < fbrange[1]:
         fb = 0
     elif area >  fbrange[1]:
-        fb = -50
+        fb = -40
     elif area < fbrange[0] and area != 0:
-        fb = 50
+        fb = 40
 
     if x == 0:
         speed = 0
         error = 0
+        me.send_rc_control(0, fb, 0, 0)
 
-<<<<<<< HEAD
-    me.send_rc_control(0, fb, 0, 0)
-=======
+    
     if error > 5:
-        speed = 30
-    elif error < -5:
         speed = -30
+        me.send_rc_control(0, fb, 0, speed)
+    elif error < -5:
+        speed = 30
+        me.send_rc_control(0, fb, 0, speed)
 
-    me.send_rc_control(0, fb, 0, speed)
->>>>>>> 2100402de2513e1bcdf76fc6be6b53b1f2f53540
+    
 
 #cap = cv2.VideoCapture(0)
 while True:
@@ -80,6 +81,7 @@ while True:
     trackface(me, info, w , pid, pError)
     print("Area", info[1])
     print("Center", info[0])
+    print (error)
     cv2.imshow("testrun", img)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         me.land()
