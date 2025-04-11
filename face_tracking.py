@@ -47,8 +47,7 @@ def trackface(me, info, w, pid, pError):
 
     error = x - w//2
 
-    speed = pid[0]*error + pid[1]*(error - pError)
-    speed = int(np.clip(speed, -100, 100))
+    speed = 0
 
     if area > fbrange[0] and area < fbrange[1]:
         fb = 0
@@ -60,6 +59,11 @@ def trackface(me, info, w, pid, pError):
     if x == 0:
         speed = 0
         error = 0
+
+    if error > 5:
+        speed = 30
+    elif error < -5:
+        speed = -30
 
     me.send_rc_control(0, fb, 0, speed)
 
