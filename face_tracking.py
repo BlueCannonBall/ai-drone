@@ -10,11 +10,11 @@ me.connect()
 
 me.streamon()
 me.takeoff()
-me.send_rc_control(0, 0, 27, 0)
+me.send_rc_control(0, 0, 35, 0)
 time.sleep(2.2)
 
 w, h = 360, 240
-fbrange = [-62800,62800]
+fbrange = [6000,10000]
 pid = [0.4, 0.4, 0]
 pError = 0
 
@@ -53,15 +53,15 @@ def trackface(me, info, w, pid, pError):
     if area > fbrange[0] and area < fbrange[1]:
         fb = 0
     elif area >  fbrange[1]:
-        fb = -20
+        fb = -50
     elif area < fbrange[0] and area != 0:
-        fb = 20
+        fb = 50
 
     if x == 0:
         speed = 0
         error = 0
 
-    me.send_rc_control(0, fb, 0, 0)
+    me.send_rc_control(0, fb, 0, speed)
 
 #cap = cv2.VideoCapture(0)
 while True:
