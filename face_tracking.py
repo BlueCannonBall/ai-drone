@@ -61,7 +61,7 @@ def trackface(me, info, w, pid, pError):
         speed = 0
         error = 0
 
-    me.send_rc_control(0, fb, 0, speed)
+    me.send_rc_control(0, fb, 0, 0)
 
 #cap = cv2.VideoCapture(0)
 while True:
