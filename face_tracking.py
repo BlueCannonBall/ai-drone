@@ -10,11 +10,11 @@ me.connect()
 
 me.streamon()
 me.takeoff()
-me.send_rc_control(0, 0, 25, 0)
+me.send_rc_control(0, 0, 27, 0)
 time.sleep(2.2)
 
 w, h = 360, 240
-fbrange = [62800,-62800]
+fbrange = [-62800,62800]
 pid = [0.4, 0.4, 0]
 pError = 0
 
@@ -61,9 +61,9 @@ def trackface(me, info, w, pid, pError):
         speed = 0
         error = 0
 
-    me.send_rc_control(0, fb, 0, speed)
+    me.send_rc_control(0, fb, 0, 0)
 
-cap = cv2.VideoCapture(0)
+#cap = cv2.VideoCapture(0)
 while True:
     #_, img = cap.read()
     img = me.get_frame_read().frame
