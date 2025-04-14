@@ -1,8 +1,3 @@
-import keyboard
-import time, cv2
-from threading import Thread
-from djitellopy import Tello
-
 class ManualControls:
     def __init__(self, tello):
         self.tello = tello
