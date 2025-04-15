@@ -10,13 +10,15 @@ me.connect()
 
 me.streamon()
 me.takeoff()
-me.send_rc_control(0, 0, 37, 0)
+me.send_rc_control(0, 0, 35, 0)
 time.sleep(2.2)
 
 w, h = 360, 240
 fbrange = [5000,10000]
-pid = [0.4, 0.4, 0]
+pid = [0.4, 0.4, 0.4]
 pError = 0
+dt = 0.1
+integral = 0
 
 def findFace(img):
     faceCascade = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
@@ -46,9 +48,15 @@ def trackface(me, info, w, pid, pError):
     x, y = info[0]
 
     global error
-    error = x - w//2
+    error = x - (w//2)
 
-    speed = 0
+    integral = error*dt
+    derivative = (error-pError) / dt if dt > 0 else 0
+    pError = error
+
+    speed = pid[0]*error + pid[1]*(integral) + pid[2]*derivative
+    speed = int(np.clip(speed, -100, 100))
+    
 
     if area > fbrange[0] and area < fbrange[1]:
         fb = 0
@@ -60,25 +68,28 @@ def trackface(me, info, w, pid, pError):
     if x == 0:
         speed = 0
         error = 0
-        me.send_rc_control(0, fb, 0, 0)
+        
+    me.send_rc_control(0, fb, 0, speed)
 
-    
+    '''
     if error > 5:
         speed = -30
         me.send_rc_control(0, fb, 0, speed)
     elif error < -5:
         speed = 30
         me.send_rc_control(0, fb, 0, speed)
-
+    '''
+    
+    return pError
     
 
 #cap = cv2.VideoCapture(0)
 while True:
     #_, img = cap.read()
     img = me.get_frame_read().frame
-    img, info = findFace(img)
     img = cv2.resize(img, (w,h))
-    trackface(me, info, w , pid, pError)
+    img, info = findFace(img)
+    pError = trackface(me, info, w , pid, pError)
     print("Area", info[1])
     print("Center", info[0])
     print (error)
