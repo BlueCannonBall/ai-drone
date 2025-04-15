@@ -3,3 +3,4 @@ bitstring
 crcmod
 opencv-python
 keyboard
+mediapipe

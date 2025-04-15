@@ -15,7 +15,7 @@ time.sleep(2.2)
 
 w, h = 360, 240
 fbrange = [2000,8000]
-pid = [0.4, 0.5, 0.2]
+pid = [0.5, 0.5, 0.1]
 pError = 0
 dt = 0.1
 integral = 0
