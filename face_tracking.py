@@ -1,5 +1,6 @@
 ######### This is a test file for face tracking
 
+import mediapipe as mp
 import cv2
 import numpy as np
 from djitellopy import tello
@@ -13,6 +14,9 @@ me.takeoff()
 me.send_rc_control(0, 0, 37, 0)
 time.sleep(2.2)
 
+mp_face_detection = mp.solutions.face_detection
+mp_drawing = mp.solutions.drawing_utils
+
 w, h = 360, 240
 fbrange = [2000,8000]
 pid = [0.5, 0.5, 0.1]
@@ -20,34 +24,39 @@ pError = 0
 dt = 0.1
 integral = 0
 
-def findFace(img):
-    # Setting up the face tracking model 
-    faceCascade = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
-    imgGray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    faces = faceCascade.detectMultiScale(imgGray, 1.2, 8)
+def findFace(bgr_image):
+    largest_face_info = [[0, 0], 0]
+    max_area = 0
 
-    # A list of center co-ordinates of the face and the area of the reactangle surrounding the face.
-    # This changes based on the distance from the drone's camera
-    myFacesListC = []
-    myFaceListArea = []
+    with mp_face_detection.FaceDetection(
+            model_selection=0, min_detection_confidence=0.5) as face_detection:
 
-    # Calculations for finding the center of the face and 
-    for (x,y,w,h) in faces:
-        cv2.rectangle(img, (x,y), (x+w, y+h), (0, 0, 255), 2)
-        cx = x + w // 2
-        cy = y + h // 2
-        area = w*h
-        cv2.circle(img, (cx, cy), 8, (0,255, 0), cv2.FILLED)
-        myFacesListC.append([cx, cy])
-        myFaceListArea.append(area)
+        if bgr_image is None:
+            return largest_face_info
 
-    # Finds the maximum area and returns the area along with the center of that area
-    if len(myFaceListArea) != 0:
-        i = myFaceListArea.index(max(myFaceListArea))
-        return img, [myFacesListC[i], myFaceListArea[i]]
-    else:
-        return img, [[0,0], 0]
-    
+        image_height, image_width, _ = bgr_image.shape
+        rgb_image = cv2.cvtColor(bgr_image, cv2.COLOR_BGR2RGB)
+        results = face_detection.process(rgb_image)
+
+        if results.detections:
+            for detection in results.detections:
+                bboxC = detection.location_data.relative_bounding_box
+                if bboxC: 
+                    xmin = int(bboxC.xmin * image_width)
+                    ymin = int(bboxC.ymin * image_height)
+                    width = int(bboxC.width * image_width)
+                    height = int(bboxC.height * image_height)
+
+                    if width > 0 and height > 0:
+                         current_area = width * height
+                         if current_area > max_area:
+                             max_area = current_area
+                             center_x = xmin + width // 2
+                             center_y = ymin + height // 2
+                             largest_face_info = [[center_x, center_y], max_area]
+
+    return largest_face_info   
+
 def trackface(me, info, w, pid, pError):
     # Gets informations from findFace()
     area = info[1]
