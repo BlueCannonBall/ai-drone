@@ -27,16 +27,18 @@ integral = 0
 def findFace(bgr_image):
     largest_face_info = [[0, 0], 0]
     max_area = 0
+    output_image = bgr_image.copy() if bgr_image is not None else None
 
     with mp_face_detection.FaceDetection(
             model_selection=0, min_detection_confidence=0.5) as face_detection:
 
         if bgr_image is None:
-            return largest_face_info
+            return bgr_image, largest_face_info
 
         image_height, image_width, _ = bgr_image.shape
-        rgb_image = cv2.cvtColor(bgr_image, cv2.COLOR_BGR2RGB)
-        results = face_detection.process(rgb_image)
+        results = face_detection.process(bgr_image)
+
+        largest_bbox = None
 
         if results.detections:
             for detection in results.detections:
@@ -54,8 +56,13 @@ def findFace(bgr_image):
                              center_x = xmin + width // 2
                              center_y = ymin + height // 2
                              largest_face_info = [[center_x, center_y], max_area]
+                             largest_bbox = (xmin, ymin, width, height)
 
-    return largest_face_info   
+    if largest_bbox:
+            x, y, w, h = largest_bbox
+            cv2.rectangle(output_image, (x, y), (x + w, y + h), (0, 255, 0), 2)
+
+    return output_image, largest_face_info   
 
 def trackface(me, info, w, pid, pError):
     # Gets informations from findFace()
@@ -106,6 +113,7 @@ while True:
     #_, img = cap.read()
     img = me.get_frame_read().frame
     img = cv2.resize(img, (w,h))
+
     img, info = findFace(img)
     pError = trackface(me, info, w , pid, pError)
     print("Area", info[1])
