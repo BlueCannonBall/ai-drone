@@ -3,10 +3,22 @@
 import mediapipe as mp
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
+from mediapipe.tasks.python.vision import FaceDetector
+from mediapipe.tasks.python.vision.face_detector import FaceDetectorOptions
+from mediapipe.tasks.python.vision.core.vision_task_running_mode import VisionTaskRunningMode
+from mediapipe.tasks.python import BaseOptions
 import cv2
 import numpy as np
 from djitellopy import tello
 import time
+
+options = FaceDetectorOptions(
+    base_options=BaseOptions(model_asset_path='detector.tflite'),
+    running_mode=VisionTaskRunningMode.VIDEO,
+)
+detector = FaceDetector.create_from_options(options)
+print(detector)
+print("MADE DETECTOR")
 
 me = tello.Tello()
 me.connect()
@@ -23,20 +35,16 @@ pError = 0
 dt = 0.1
 integral = 0
 
-base_options = python.BaseOptions(model_asset_path='detector.tflite')
-options = vision.FaceDetectorOptions(base_options=base_options)
-detector = vision.FaceDetector.create_from_options(options)
-
 def findFace(bgr_image, timestamp):
     largest_face_info = [[0, 0], 0]
     max_area = 0
     output_image = bgr_image.copy() if bgr_image is not None else None
 
-    rgb_image = cv2.cvtColor(bgr_image, cv2.COLOR_BGR2RGB)
-    mp_image = mp.Image(image_format=Image.ImageFormat.SRGB, data=frame_rgb)
-    detection_result = detector.detect_for_video(mp_image, timestamp)
+    #rgb_image = cv2.cvtColor(bgr_image, cv2.COLOR_BGR2RGB)
+    mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=bgr_image)
+    detection_result = detector.detect_for_video(mp_image, int(timestamp))
 
-    for detection in result.detections:
+    for detection in detection_result.detections:
         info = [[detection.bounding_box.origin_x + detection.bounding_box.width // 2, detection.bounding_box.origin_y + detection.bounding_box.height // 2], detection.bounding_box.width * detection.bounding_box.height]
         if info[1] > largest_face_info[1]:
             largest_face_info = info
@@ -90,6 +98,7 @@ def trackface(me, info, w, pid, pError):
     
 
 start = time.time()
+last_timestamp = time.time()
 
 # A loop to run the methods
 while True:
@@ -99,6 +108,10 @@ while True:
 
     now = time.time()
     timestamp = (now - start) * 1000
+    if timestamp == last_timestamp:
+        timestamp += 1
+    last_timestamp = timestamp
+
     img, info = findFace(img, timestamp)
     pError = trackface(me, info, w , pid, pError)
     print("Area", info[1])
