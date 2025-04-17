@@ -48,7 +48,7 @@ def findFace(rgb_image, timestamp):
     left_eye = detection_result.pose_world_landmarks[0][2]
     eye_distance = right_eye.x - left_eye.x
     area = eye_distance * eye_distance
-    cx = right_eye.x + (right_eye.x - left_eye.x) / 2
+    cx = left_eye.x + (right_eye.x - left_eye.x) / 2
     cy = right_eye.y
 
     return output_image, [[cx, cy], area]
