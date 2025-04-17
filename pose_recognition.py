@@ -49,7 +49,8 @@ def findFace(rgb_image, timestamp):
     eye_distance = abs(right_eye.x - left_eye.x)
     area = eye_distance * eye_distance
     cx = left_eye.x + (right_eye.x - left_eye.x) / 2
-    cy = right_eye.y
+    # Average of the two y values for the eyes
+    cy = (right_eye.y + left_eye.y) / 2
     cv2.rectangle(
         output_image,
         (left_eye.x, left_eye.y + eye_distance / 2),
