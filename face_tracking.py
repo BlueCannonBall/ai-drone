@@ -43,7 +43,13 @@ def findFace(bgr_image, timestamp):
     detection_result = detector.detect_for_video(mp_image, int(timestamp))
 
     for detection in detection_result.detections:
-        info = [[detection.bounding_box.origin_x + detection.bounding_box.width // 2, detection.bounding_box.origin_y + detection.bounding_box.height // 2], detection.bounding_box.width * detection.bounding_box.height]
+        info = [
+            [
+                detection.bounding_box.origin_x + detection.bounding_box.width // 2,
+                detection.bounding_box.origin_y + detection.bounding_box.height // 2
+            ],
+            detection.bounding_box.width * detection.bounding_box.height
+        ]
         if info[1] > largest_face_info[1]:
             largest_face_info = info
         cv2.rectangle(
