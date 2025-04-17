@@ -39,7 +39,7 @@ def findFace(rgb_image, timestamp):
     output_image = rgb_image.copy() if rgb_image is not None else None
 
     mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb_image)
-    detection_result = detector.detect_for_video(mp_image, int(timestamp))
+    detection_result = detector.detect_for_video(mp_image, timestamp)
 
     for detection in detection_result.detections:
         info = [
@@ -109,8 +109,8 @@ def trackface(me, info, w, pid, pError):
     return pError
     
 
-start = time.time()
-last_timestamp = time.time()
+start = time.monotonic()
+last_timestamp = 0
 
 # A loop to run the methods
 while True:
@@ -118,22 +118,21 @@ while True:
     img = me.get_frame_read().frame
     img = cv2.resize(img, (w,h))
 
-    now = time.time()
-    timestamp = (now - start) * 1000
+    now = time.monotonic()
+    timestamp = int((now - start) * 1000)
     # mediapipe expects a strictly increasing timestamp
     # this bit of code ensures that the last timestamp is never equal to the new one
     # t_n < t_n+1
     if timestamp == last_timestamp:
         timestamp += 1
     last_timestamp = timestamp
-
     img, info = findFace(img, timestamp)
     pError = trackface(me, info, w , pid, pError)
     print("Area", info[1])
     print("Center", info[0])
     #print (error) Test condition
     bgr_image = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-    cv2.imshow("testrun", ggr_image)
+    cv2.imshow("testrun", bgr_image)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         me.land()
         break
