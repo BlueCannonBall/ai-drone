@@ -17,8 +17,6 @@ options = FaceDetectorOptions(
     running_mode=VisionTaskRunningMode.VIDEO,
 )
 detector = FaceDetector.create_from_options(options)
-print(detector)
-print("MADE DETECTOR")
 
 me = tello.Tello()
 me.connect()
