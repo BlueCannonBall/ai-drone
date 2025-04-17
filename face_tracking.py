@@ -46,7 +46,13 @@ def findFace(bgr_image, timestamp):
         info = [[detection.bounding_box.origin_x + detection.bounding_box.width // 2, detection.bounding_box.origin_y + detection.bounding_box.height // 2], detection.bounding_box.width * detection.bounding_box.height]
         if info[1] > largest_face_info[1]:
             largest_face_info = info
-        cv2.rectangle(output_image, (detection.bounding_box.origin_x, detection.bounding_box.origin_y), (detection.bounding_box.origin_x + detection.bounding_box.width, detection.bounding_box.origin_y + detection.bounding_box.height), (0, 255, 0), 2)
+        cv2.rectangle(
+            output_image,
+            (detection.bounding_box.origin_x, detection.bounding_box.origin_y),
+            (detection.bounding_box.origin_x + detection.bounding_box.width, detection.bounding_box.origin_y + detection.bounding_box.height),
+            (0, 255, 0),
+            2
+        )
 
 
     return output_image, largest_face_info   
