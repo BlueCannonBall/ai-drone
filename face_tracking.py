@@ -55,7 +55,10 @@ def findFace(bgr_image, timestamp):
         cv2.rectangle(
             output_image,
             (detection.bounding_box.origin_x, detection.bounding_box.origin_y),
-            (detection.bounding_box.origin_x + detection.bounding_box.width, detection.bounding_box.origin_y + detection.bounding_box.height),
+            (
+                detection.bounding_box.origin_x + detection.bounding_box.width,
+                detection.bounding_box.origin_y + detection.bounding_box.height
+            ),
             (0, 255, 0),
             2
         )
