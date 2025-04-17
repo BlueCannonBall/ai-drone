@@ -33,13 +33,12 @@ pError = 0
 dt = 0.1
 integral = 0
 
-def findFace(bgr_image, timestamp):
+def findFace(rgb_image, timestamp):
     largest_face_info = [[0, 0], 0]
     max_area = 0
-    output_image = bgr_image.copy() if bgr_image is not None else None
+    output_image = rgb_image.copy() if rgb_image is not None else None
 
-    #rgb_image = cv2.cvtColor(bgr_image, cv2.COLOR_BGR2RGB)
-    mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=bgr_image)
+    mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb_image)
     detection_result = detector.detect_for_video(mp_image, int(timestamp))
 
     for detection in detection_result.detections:
@@ -133,7 +132,8 @@ while True:
     print("Area", info[1])
     print("Center", info[0])
     #print (error) Test condition
-    cv2.imshow("testrun", img)
+    bgr_image = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+    cv2.imshow("testrun", ggr_image)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         me.land()
         break
