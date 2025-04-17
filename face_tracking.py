@@ -110,7 +110,7 @@ def trackface(me, info, w, pid, pError):
     
 
 start = time.time()
-last_timestamp = time.monotonic()
+last_timestamp = time.time()
 
 # A loop to run the methods
 while True:
@@ -118,7 +118,7 @@ while True:
     img = me.get_frame_read().frame
     img = cv2.resize(img, (w,h))
 
-    now = time.monotonic()
+    now = time.time()
     timestamp = (now - start) * 1000
     # mediapipe expects a strictly increasing timestamp
     # this bit of code ensures that the last timestamp is never equal to the new one
