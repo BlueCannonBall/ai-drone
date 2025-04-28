@@ -44,17 +44,22 @@ def findFace(rgb_image, timestamp):
     mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb_image)
     detection_result = detector.detect_for_video(mp_image, timestamp)
 
-    right_eye = detection_result.pose_world_landmarks[0][5]
-    left_eye = detection_result.pose_world_landmarks[0][2]
-    eye_distance = abs(right_eye.x - left_eye.x)
-    area = eye_distance * eye_distance
-    cx = left_eye.x + (right_eye.x - left_eye.x) / 2
+    if len(detection_result.pose_landmarks) == 0:
+        return output_image, [[0, 0], 0]
+    height, width, channels = rgb_image.shape
+    width = float(width)
+    height = float(height)
+    right_eye = detection_result.pose_landmarks[0][5]
+    left_eye = detection_result.pose_landmarks[0][2]
+    eye_distance = abs(right_eye.x * width - left_eye.x * width) 
+    area = eye_distance * eye_distance * 8.0
+    cx = left_eye.x * width + (right_eye.x * width - left_eye.x * width) / 2
     # Average of the two y values for the eyes
-    cy = (right_eye.y + left_eye.y) / 2
+    cy = (right_eye.y * height + left_eye.y * height) / 2
     cv2.rectangle(
         output_image,
-        (left_eye.x, left_eye.y + eye_distance / 2),
-        (right_eye.x, right_eye.y - eye_distance / 2),
+        (int(left_eye.x * width), int(left_eye.y * height + eye_distance / 2)),
+        (int(right_eye.x * width), int(right_eye.y * height - eye_distance / 2)),
         (0, 255, 0),
         2
     )
