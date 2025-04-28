@@ -1,6 +1,23 @@
 import cv2
 import mediapipe as mp
 import math
+from djitellopy import tello
+import time
+import numpy as np
+
+me = tello.Tello()
+me.connect()
+
+me.streamon()
+me.takeoff()
+me.send_rc_control(0, 0, 37, 0)
+time.sleep(2)
+
+pixel_range = [80,130]
+pid = [0.5, 0.5, 0.1]
+pError = 0
+dt = 0.1
+integral = 0
 
 #initializing face_mesh
 mp_face_mesh = mp.solutions.face_mesh
@@ -12,6 +29,34 @@ mp_drawing = mp.solutions.drawing_utils
 #Geometric distance between two points
 def distance_between_points(point1, point2):
     return math.sqrt((point2[0] - point1[0])**2 + (point2[1] - point1[1])**2)
+
+def track_face(me, pid, pError, distance_between_eyes):
+    fb = 0
+
+    # Error from the center of the screen
+    error =  distance_between_eyes/2
+
+    # PID Calculations to change yaw of the drone according to the Error
+    integral = error*dt
+    derivative = (error-pError) / dt if dt > 0 else 0
+    pError = error
+
+    speed = pid[0]*error + pid[1]*(integral) + pid[2]*derivative
+    speed = int(np.clip(speed, -100, 100))
+
+    if distance_between_eyes < pixel_range[0] & distance_between_eyes > pixel_range:
+        fb = 0
+    elif distance_between_eyes < pixel_range[0]:
+        fb = 40
+    elif distance_between_eyes > pixel_range[1]:
+        fb = -40
+
+    if distance_between_eyes == 0:
+        speed = 0
+        error = 0
+
+    me.send_rc_control(0, fb, 0, speed)
+    return pError
 
 cap = cv2.VideoCapture(0)
 
