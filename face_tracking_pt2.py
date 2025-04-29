@@ -21,7 +21,7 @@ integral = 0
 
 #initializing face_mesh
 mp_face_mesh = mp.solutions.face_mesh
-face_mesh = mp_face_mesh.FaceMesh()
+face_mesh = mp_face_mesh.FaceMesh(min_detection_confidence=0.5, max_num_faces=1)
 
 #Drawing utilities
 mp_drawing = mp.solutions.drawing_utils
@@ -44,9 +44,9 @@ def track_face(me, pid, pError, distance_between_eyes):
     speed = pid[0]*error + pid[1]*(integral) + pid[2]*derivative
     speed = int(np.clip(speed, -100, 100))
 
-    if distance_between_eyes < pixel_range[0] & distance_between_eyes > pixel_range:
+    if distance_between_eyes < pixel_range[0] and distance_between_eyes > pixel_range[1]:
         fb = 0
-    elif distance_between_eyes < pixel_range[0]:
+    elif distance_between_eyes < pixel_range[0] and distance_between_eyes > 0:
         fb = 40
     elif distance_between_eyes > pixel_range[1]:
         fb = -40
@@ -58,18 +58,17 @@ def track_face(me, pid, pError, distance_between_eyes):
     me.send_rc_control(0, fb, 0, speed)
     return pError
 
-cap = cv2.VideoCapture(0)
+#cap = cv2.VideoCapture(0)
 
-while cap.isOpened():
-    success, frame = cap.read()
-    if not success:
-        break
+while True:
 
+    frame = me.get_frame_read().frame
     frame = cv2.flip(frame, 1)
     rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
     results = face_mesh.process(rgb_frame)
 
+    distance = 0
     if results.multi_face_landmarks:
         for faceLandmarks in results.multi_face_landmarks:
 
@@ -88,15 +87,14 @@ while cap.isOpened():
 
             #computes distance
             distance = distance_between_points(left_eye_coords, right_eye_coords)
-            print ("Distance between eyes (pixels): ", distance)
-
-    cv2.imshow("Eye distance", frame)
+    
+    pError = track_face(me, pid, pError, distance)
+    cv2.imshow("Drone vision", frame)
 
     if cv2.waitKey(1) & 0XFF == 27:
         break
 
-cap.release()
-cap.destroyAllWindows()
+
 
 
 
