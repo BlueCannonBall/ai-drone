@@ -21,7 +21,7 @@ integral = 0
 
 #initializing face_mesh
 mp_face_mesh = mp.solutions.face_mesh
-face_mesh = mp_face_mesh.FaceMesh()
+face_mesh = mp_face_mesh.FaceMesh(min_detection_confidence=0.5, max_num_faces=1)
 
 #Drawing utilities
 mp_drawing = mp.solutions.drawing_utils
@@ -44,7 +44,7 @@ def track_face(me, pid, pError, distance_between_eyes):
     speed = pid[0]*error + pid[1]*(integral) + pid[2]*derivative
     speed = int(np.clip(speed, -100, 100))
 
-    if distance_between_eyes < pixel_range[0] & distance_between_eyes > pixel_range:
+    if distance_between_eyes < pixel_range[0] and distance_between_eyes > pixel_range[1]:
         fb = 0
     elif distance_between_eyes < pixel_range[0] and distance_between_eyes > 0:
         fb = 40
