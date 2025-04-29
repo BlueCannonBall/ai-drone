@@ -32,7 +32,7 @@ me.send_rc_control(0, 0, 37, 0)
 time.sleep(2.2)
 
 w, h = 360, 240
-fbrange = [2000,8000]
+fbrange = [1000,4000]
 pid = [0.5, 0.5, 0.1]
 pError = 0
 dt = 0.1
@@ -92,20 +92,23 @@ def trackface(me, info, w, pid, pError):
     elif area < fbrange[0] and area != 0:
         fb = 40
 
+    yError = y - (h // 2.5)
+    vertical_speed = 0
+    
+    if yError > 40:
+        vertical_speed = -30
+    if yError < -40:
+        vertical_speed = 30
+
+    if area > fbrange[1]:
+        vertical_speed = 0
+
     if x == 0:
+        vertical_speed = 0
         speed = 0
         error = 0
         
-    me.send_rc_control(0, fb, 0, speed)
-
-    '''
-    if error > 5:
-        speed = -30
-        me.send_rc_control(0, fb, 0, speed)
-    elif error < -5:
-        speed = 30
-        me.send_rc_control(0, fb, 0, speed)
-    '''
+    me.send_rc_control(0, fb, vertical_speed, speed)
     
     return pError
     
