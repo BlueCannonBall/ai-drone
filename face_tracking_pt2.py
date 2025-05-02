@@ -20,8 +20,8 @@ dt = 0.1
 integral = 0
 
 #initializing face_mesh
-mp_face_mesh = mp.solutions.face_mesh
-face_mesh = mp_face_mesh.FaceMesh(min_detection_confidence=0.5, max_num_faces=1)
+# mp_face_mesh = mp.solutions.face_mesh
+face_mesh = mp.solutions.face_mesh.FaceMesh(min_detection_confidence=0.2, max_num_faces=1)
 
 #Drawing utilities
 mp_drawing = mp.solutions.drawing_utils
@@ -30,11 +30,11 @@ mp_drawing = mp.solutions.drawing_utils
 def distance_between_points(point1, point2):
     return math.sqrt((point2[0] - point1[0])**2 + (point2[1] - point1[1])**2)
 
-def track_face(me, pid, pError, distance_between_eyes):
+def track_face(me, pid, pError, distance_between_eyes, w, left_eye_coords, right_eye_coords):
     fb = 0
 
     # Error from the center of the screen
-    error =  distance_between_eyes/2
+    error =  ((right_eye_coords[0] + left_eye_coords[0])//2) - (w//2)
 
     # PID Calculations to change yaw of the drone according to the Error
     integral = error*dt
@@ -66,6 +66,11 @@ while True:
     frame = cv2.flip(frame, 1)
     rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
+    h = 0
+    w = 0
+    #left_eye_coords = (0, 0)
+    #right_eye_coords = (0, 0)
+
     results = face_mesh.process(rgb_frame)
 
     distance = 0
@@ -73,7 +78,7 @@ while True:
         for faceLandmarks in results.multi_face_landmarks:
 
             #gets h, w of the frame
-            h, w, _ = frame.shape
+            h, w, _ = rgb_frame.shape
 
             #gets the coords of left and right eye and converts it into pixels
             left_eye = faceLandmarks.landmark[33]
@@ -88,8 +93,12 @@ while True:
             #computes distance
             distance = distance_between_points(left_eye_coords, right_eye_coords)
     
-    pError = track_face(me, pid, pError, distance)
-    cv2.imshow("Drone vision", frame)
+            pError = track_face(me, pid, pError, distance, w, left_eye_coords, right_eye_coords)
+            print(pError)
+    else:
+        me.send_rc_control(0, 0, 0, 0)
+
+    cv2.imshow("Drone vision", rgb_frame)
 
     if cv2.waitKey(1) & 0XFF == 27:
         break
