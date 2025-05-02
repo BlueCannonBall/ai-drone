@@ -1,5 +1,13 @@
 import cv2
 import mediapipe as mp
+
+from mediapipe.tasks import python
+from mediapipe.tasks.python import vision
+from mediapipe.tasks.python.vision import FaceDetector
+from mediapipe.tasks.python.vision.face_detector import FaceDetectorOptions
+from mediapipe.tasks.python.vision.core.vision_task_running_mode import VisionTaskRunningMode
+from mediapipe.tasks.python import BaseOptions
+
 import math
 from djitellopy import tello
 import time
@@ -11,6 +19,16 @@ cap = cv2.VideoCapture(0)
 mp_hands = mp.solutions.hands
 hands = mp_hands.Hands(max_num_hands = 1)
 mp_draw = mp.solutions.drawing_utils
+
+BaseOptions = mp.tasks.BaseOptions
+PoseLandmarker = mp.tasks.vision.PoseLandmarker
+PoseLandmarkerOptions = mp.tasks.vision.PoseLandmarkerOptions
+VisionRunningMode = mp.tasks.vision.RunningMode
+options = PoseLandmarkerOptions(
+    base_options=BaseOptions(model_asset_path="pose_landmarker_lite.task"),
+    running_mode=VisionRunningMode.VIDEO
+)
+detector = PoseLandmarker.create_from_options(options)
 
 def classify_gestures(landmarks):
     gesture = ""
@@ -40,9 +58,39 @@ def move_drone(me, gesture):
     # need to include PID controls 
     return
 
-def distance_maintainer():
-    return 
-    # A function to keep a certain distance from the face/hand
+# A function to keep a certain distance from the face/hand
+# Arguments: OpenCV image, video timestamp, convert (bool)
+# Set convert to True if the input image is in BGR format.
+# Returns: annotated image, [[center_x, center_y], area]
+def distance_maintainer(image, timestamp: int, convert=False):
+    output_image = image.copy() if image is not None else None
+
+    if convert:
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
+    mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=image)
+    detection_result = detector.detect_for_video(mp_image, timestamp)
+
+    if len(detection_result.pose_landmarks) == 0:
+        return output_image, [[0, 0], 0]
+    height, width, channels = image.shape
+    width = float(width)
+    height = float(height)
+    right_eye = detection_result.pose_landmarks[0][5]
+    left_eye = detection_result.pose_landmarks[0][2]
+    eye_distance = abs(right_eye.x * width - left_eye.x * width) 
+    area = eye_distance * eye_distance * 8.0
+    cx = left_eye.x * width + (right_eye.x * width - left_eye.x * width) / 2
+    # Average of the two y values for the eyes
+    cy = (right_eye.y * height + left_eye.y * height) / 2
+    cv2.rectangle(
+        output_image,
+        (int(left_eye.x * width), int(left_eye.y * height + eye_distance / 2)),
+        (int(right_eye.x * width), int(right_eye.y * height - eye_distance / 2)),
+        (0, 255, 0),
+        2
+    )
+    return output_image, [[cx, cy], area]
  
 
 while True:
