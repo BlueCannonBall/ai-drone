@@ -1,6 +1,10 @@
 import cv2
 import mediapipe as mp
 import math
+from djitellopy import tello
+import time
+
+me = tello.Tello()
 
 cap = cv2.VideoCapture(0)
 
@@ -9,9 +13,9 @@ hands = mp_hands.Hands(max_num_hands = 1)
 mp_draw = mp.solutions.drawing_utils
 
 def classify_gestures(landmarks):
-    gesture  = ""
+    gesture = ""
     if landmarks[12].y < landmarks[8].y:
-        gesture = "go up"
+        gesture = "Go up"
     if landmarks[12].y > landmarks[8].y:
         if landmarks[12].x > landmarks[8].x:
             gesture = "Go right"
@@ -23,6 +27,23 @@ def classify_gestures(landmarks):
         gesture = "No hand Detected"'''
     return gesture
 
+def move_drone(me, gesture):
+    if gesture == "Go up":
+        me.send_rc_contol(0,0,0,0)
+    if gesture == "Go down":
+        me.send_rc_contol(0,0,0,0)
+    if gesture == "Go right":
+        me.send_rc_contol(0,0,0,0)
+    if gesture == "Go left":
+        me.send_rc_contol(0,0,0,0)
+
+    # need to include PID controls 
+    return
+
+def distance_maintainer():
+    return 
+    # A function to keep a certain distance from the face/hand
+ 
 
 while True:
     success, img = cap.read()
