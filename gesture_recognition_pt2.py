@@ -40,6 +40,7 @@ pid = [0.5, 0.5, 0.1]
 pError = 0
 dt = 0.1
 integral = 0
+height = 0
 
 def findFace(rgb_image, timestamp):
     output_image = rgb_image.copy() if rgb_image is not None else None
@@ -84,15 +85,19 @@ def classify_gestures(landmarks):
         gesture = "No hand Detected"'''
     return gesture
 
-def move_drone(me, gesture):
+def move_drone(me, gesture, height):
     if gesture == "Go up":
-        me.send_rc_control(0,0,40,0)
+        height = me.get_height()
+        if (height <= 205):
+            me.send_rc_control(0,0,30,0)
+        else:
+            me.send_rc_control(0,0,0,0)
     if gesture == "Go down":
-        me.send_rc_control(0,0,-40,0)
+        me.send_rc_control(0,0,-30,0)
     if gesture == "Go right":
-        me.send_rc_control(40,0,0,0)
+        me.send_rc_control(30,0,0,0)
     if gesture == "Go left":
-        me.send_rc_control(-40,0,0,0)
+        me.send_rc_control(-30,0,0,0)
 
     # need to include PID controls 
     return
@@ -157,6 +162,7 @@ while True:
     if results.multi_hand_landmarks:
         for hand_landmarks in results.multi_hand_landmarks:
             h, w, _ = img.shape
+            height = me.get_height()
             # mp_draw.draw_landmarks(img, hand_landmarks, mp_hands.HAND_CONNECTIONS)
             
             middle_finger = hand_landmarks.landmark[12]
@@ -173,7 +179,8 @@ while True:
 
             gesture = classify_gestures(hand_landmarks.landmark)
             print(gesture)
-            move_drone(me, gesture)
+            print(height)
+            move_drone(me, gesture, height)
     else:
         now = time.monotonic()
         timestamp = int((now - start) * 1000)
