@@ -88,10 +88,16 @@ def classify_gestures(landmarks):
 def move_drone(me, gesture, height):
     if gesture == "Go up":
         height = me.get_height()
-        if (height <= 205):
+        if (height <= 185):
             me.send_rc_control(0,0,30,0)
         else:
             me.send_rc_control(0,0,0,0)
+            time.sleep(1)
+            me.flip('b')
+            time.sleep(3)
+            me.send_rc_control(0,0,0,0)
+            time.sleep(1)
+
     if gesture == "Go down":
         me.send_rc_control(0,0,-30,0)
     if gesture == "Go right":
@@ -124,9 +130,9 @@ def trackface(me, info, w, pid, pError):
     if area > fbrange[0] and area < fbrange[1]:
         fb = 0
     elif area >  fbrange[1]:
-        fb = -40
+        fb = -30
     elif area < fbrange[0] and area != 0:
-        fb = 40
+        fb = 30
 
     yError = y - (h // 2.5)
     vertical_speed = 0
@@ -162,7 +168,7 @@ while True:
     if results.multi_hand_landmarks:
         for hand_landmarks in results.multi_hand_landmarks:
             h, w, _ = img.shape
-            height = me.get_height()
+            #height = me.get_height()
             # mp_draw.draw_landmarks(img, hand_landmarks, mp_hands.HAND_CONNECTIONS)
             
             middle_finger = hand_landmarks.landmark[12]
@@ -179,7 +185,7 @@ while True:
 
             gesture = classify_gestures(hand_landmarks.landmark)
             print(gesture)
-            print(height)
+            #print(height)
             move_drone(me, gesture, height)
     else:
         now = time.monotonic()
