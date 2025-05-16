@@ -197,13 +197,18 @@ while True:
             timestamp += 1
         last_timestamp = timestamp
         img, info = findFace(img, timestamp)
-        pError = trackface(me, info, w , pid, pError)
-        print("Area", info[1])
-        print("Center", info[0])
+        if info[1] != 0:
+            pError = trackface(me, info, w , pid, pError)
+            print("Area", info[1])
+            print("Center", info[0])
+        else:
+            # No faces found, spin in a circle to find some:
+            me.send_rc_control(0, 0, 0, 15)
+
 
     #print (error) Test condition
     bgr_image = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
     cv2.imshow("testrun", bgr_image)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         me.land()
-        break
+       break
