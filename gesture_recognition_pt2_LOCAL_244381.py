@@ -39,8 +39,6 @@ fbrange = [1000,4000]
 pid = [0.5, 0.5, 0.1]
 pError = 0
 dt = 0.1
-integral = 0
-height = 0
 
 def findFace(rgb_image, timestamp):
     output_image = rgb_image.copy() if rgb_image is not None else None
@@ -85,29 +83,6 @@ def classify_gestures(landmarks):
         gesture = "No hand Detected"'''
     return gesture
 
-def move_drone(me, gesture, height):
-    if gesture == "Go up":
-        height = me.get_height()
-        if (height <= 185):
-            me.send_rc_control(0,0,30,0)
-        else:
-            me.send_rc_control(0,0,0,0)
-            time.sleep(1)
-            me.flip('b')
-            time.sleep(3)
-            me.send_rc_control(0,0,0,0)
-            time.sleep(1)
-
-    if gesture == "Go down":
-        me.send_rc_control(0,0,-30,0)
-    if gesture == "Go right":
-        me.send_rc_control(30,0,0,0)
-    if gesture == "Go left":
-        me.send_rc_control(-30,0,0,0)
-
-    # need to include PID controls 
-    return
-
 def trackface(me, info, w, pid, pError):
     # Gets informations from findFace()
     area = info[1]
@@ -130,9 +105,9 @@ def trackface(me, info, w, pid, pError):
     if area > fbrange[0] and area < fbrange[1]:
         fb = 0
     elif area >  fbrange[1]:
-        fb = -30
+        fb = -40
     elif area < fbrange[0] and area != 0:
-        fb = 30
+        fb = 40
 
     yError = y - (h // 2.5)
     vertical_speed = 0
@@ -164,11 +139,23 @@ while True:
     img = me.get_frame_read().frame
     img = cv2.resize(img, (w,h))
 
+    now = time.monotonic()
+    timestamp = int((now - start) * 1000)
+    # mediapipe expects a strictly increasing timestamp
+    # this bit of code ensures that the last timestamp is never equal to the new one
+    # t_n < t_n+1
+    if timestamp == last_timestamp:
+        timestamp += 1
+    last_timestamp = timestamp
+    img, info = findFace(img, timestamp)
+    pError = trackface(me, info, w , pid, pError)
+    print("Area", info[1])
+    print("Center", info[0])
+
     results = hands.process(img)
     if results.multi_hand_landmarks:
         for hand_landmarks in results.multi_hand_landmarks:
             h, w, _ = img.shape
-            #height = me.get_height()
             # mp_draw.draw_landmarks(img, hand_landmarks, mp_hands.HAND_CONNECTIONS)
             
             middle_finger = hand_landmarks.landmark[12]
@@ -185,26 +172,6 @@ while True:
 
             gesture = classify_gestures(hand_landmarks.landmark)
             print(gesture)
-            #print(height)
-            move_drone(me, gesture, height)
-    else:
-        now = time.monotonic()
-        timestamp = int((now - start) * 1000)
-        # mediapipe expects a strictly increasing timestamp
-        # this bit of code ensures that the last timestamp is never equal to the new one
-        # t_n < t_n+1
-        if timestamp == last_timestamp:
-            timestamp += 1
-        last_timestamp = timestamp
-        img, info = findFace(img, timestamp)
-        if info[1] != 0:
-            pError = trackface(me, info, w , pid, pError)
-            print("Area", info[1])
-            print("Center", info[0])
-        else:
-            # No faces found, spin in a circle to find some:
-            me.send_rc_control(0, 0, 0, 30)
-
 
     #print (error) Test condition
     bgr_image = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
