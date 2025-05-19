@@ -12,6 +12,7 @@ import cv2
 import numpy as np
 from djitellopy import tello
 import time
+from pid import PID
 
 BaseOptions = mp.tasks.BaseOptions
 PoseLandmarker = mp.tasks.vision.PoseLandmarker
@@ -33,10 +34,7 @@ time.sleep(2.2)
 
 w, h = 360, 240
 fbrange = [1000,4000]
-pid = [0.5, 0.5, 0.1]
-pError = 0
-dt = 0.1
-integral = 0
+rotation_pid_controller = PID()
 
 def findFace(rgb_image, timestamp):
     output_image = rgb_image.copy() if rgb_image is not None else None
@@ -66,23 +64,15 @@ def findFace(rgb_image, timestamp):
 
     return output_image, [[cx, cy], area]
 
-def trackface(me, info, w, pid, pError):
+def trackface(me, info, w, rotation_pid_controller):
     # Gets informations from findFace()
     area = info[1]
     fb = 0
     x, y = info[0]
 
-    # Error from the center of the screen
     error = x - (w//2)
-
-    # PID Calculations to change yaw of the drone according to the Error
-    integral = error*dt
-    derivative = (error-pError) / dt if dt > 0 else 0
-    pError = error
-
-    speed = pid[0]*error + pid[1]*(integral) + pid[2]*derivative
+    speed = rotation_pid_controller.calculate(error)
     speed = int(np.clip(speed, -100, 100))
-    
 
     # Moves the drone forward or backward based on the area of the rectangle on the face
     if area > fbrange[0] and area < fbrange[1]:
@@ -110,8 +100,6 @@ def trackface(me, info, w, pid, pError):
         
     me.send_rc_control(0, fb, vertical_speed, speed)
     
-    return pError
-    
 
 start = time.monotonic()
 last_timestamp = 0
@@ -131,7 +119,7 @@ while True:
         timestamp += 1
     last_timestamp = timestamp
     img, info = findFace(img, timestamp)
-    pError = trackface(me, info, w , pid, pError)
+    trackface(me, info, w, rotation_pid_controller)
     print("Area", info[1])
     print("Center", info[0])
     #print (error) Test condition

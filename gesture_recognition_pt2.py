@@ -39,7 +39,6 @@ fbrange = [1000,4000]
 pid = [0.5, 0.5, 0.1]
 pError = 0
 dt = 0.1
-integral = 0
 
 def findFace(rgb_image, timestamp):
     output_image = rgb_image.copy() if rgb_image is not None else None
