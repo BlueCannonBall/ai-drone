@@ -7,7 +7,7 @@ class PID:
 		self.prev_error = 0
 
 	def calculate(self, error):
-		integral = error * dt
-		derivative = (error - self.prev_error) / dt if dt > 0 else 0
+		integral = error * self.dt
+		derivative = (error - self.prev_error) / self.dt if self.dt > 0 else 0
 		self.prev_error = error
 		return self.proportion * error + self.integral * integral + self.derivative * derivative

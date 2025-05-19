@@ -35,6 +35,7 @@ time.sleep(2.2)
 w, h = 360, 240
 fbrange = [1000,4000]
 rotation_pid_controller = PID()
+fb_pid_controller = PID(proportion=0.05, integral=0.0, derivative=0.05)
 
 def findFace(rgb_image, timestamp):
     output_image = rgb_image.copy() if rgb_image is not None else None
@@ -64,23 +65,27 @@ def findFace(rgb_image, timestamp):
 
     return output_image, [[cx, cy], area]
 
-def trackface(me, info, w, rotation_pid_controller):
+def trackface(me, info, w, rotation_pid_controller, fb_pid_controller):
     # Gets informations from findFace()
     area = info[1]
-    fb = 0
+    fb_speed = 0
     x, y = info[0]
 
-    error = x - (w//2)
-    speed = rotation_pid_controller.calculate(error)
+    rotation_error = x - (w//2)
+    speed = rotation_pid_controller.calculate(rotation_error)
     speed = int(np.clip(speed, -100, 100))
 
+    fb_error = 2000 - area
+    fb_speed = fb_pid_controller.calculate(fb_error)
+    fb_speed = int(np.clip(fb_speed, -40, 40))
+
     # Moves the drone forward or backward based on the area of the rectangle on the face
-    if area > fbrange[0] and area < fbrange[1]:
-        fb = 0
-    elif area >  fbrange[1]:
-        fb = -40
-    elif area < fbrange[0] and area != 0:
-        fb = 40
+    # if area > fbrange[0] and area < fbrange[1]:
+    #     fb = 0
+    # elif area >  fbrange[1]:
+    #     fb = -40
+    # elif area < fbrange[0] and area != 0:
+    #     fb = 40
 
     yError = y - (h // 2.5)
     vertical_speed = 0
@@ -96,9 +101,9 @@ def trackface(me, info, w, rotation_pid_controller):
     if x == 0:
         vertical_speed = 0
         speed = 0
-        error = 0
+        rotation_error = 0
         
-    me.send_rc_control(0, fb, vertical_speed, speed)
+    me.send_rc_control(0, fb_speed, vertical_speed, speed)
     
 
 start = time.monotonic()
@@ -119,7 +124,7 @@ while True:
         timestamp += 1
     last_timestamp = timestamp
     img, info = findFace(img, timestamp)
-    trackface(me, info, w, rotation_pid_controller)
+    trackface(me, info, w, rotation_pid_controller, fb_pid_controller)
     print("Area", info[1])
     print("Center", info[0])
     #print (error) Test condition
