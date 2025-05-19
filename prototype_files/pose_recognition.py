@@ -36,6 +36,7 @@ w, h = 360, 240
 fbrange = [1000,4000]
 rotation_pid_controller = PID()
 fb_pid_controller = PID(proportion=0.05, integral=0.0, derivative=0.05)
+ud_pid_controller = PID()
 
 def findFace(rgb_image, timestamp):
     output_image = rgb_image.copy() if rgb_image is not None else None
@@ -65,7 +66,7 @@ def findFace(rgb_image, timestamp):
 
     return output_image, [[cx, cy], area]
 
-def trackface(me, info, w, rotation_pid_controller, fb_pid_controller):
+def trackface(me, info, w, rotation_pid_controller, fb_pid_controller, ud_pid_controller):
     # Gets informations from findFace()
     area = info[1]
     fb_speed = 0
@@ -87,21 +88,23 @@ def trackface(me, info, w, rotation_pid_controller, fb_pid_controller):
     # elif area < fbrange[0] and area != 0:
     #     fb = 40
 
-    yError = y - (h // 2.5)
-    vertical_speed = 0
+    yError = (h // 2.5) - y
+    vertical_speed = ud_pid_controller.calculate(yError)
+    vertical_speed = int(np.clip(vertical_speed, -30, 30))
     
-    if yError > 40:
-        vertical_speed = -30
-    if yError < -40:
-        vertical_speed = 30
+    # if yError > 40:
+    #     vertical_speed = -30
+    # if yError < -40:
+    #     vertical_speed = 30
 
-    if area > fbrange[1]:
-        vertical_speed = 0
+    # if area > fbrange[1]:
+    #     vertical_speed = 0
 
     if x == 0:
         vertical_speed = 0
         speed = 0
-        rotation_error = 0
+        fb_speed = 0
+        #rotation_error = 0
         
     me.send_rc_control(0, fb_speed, vertical_speed, speed)
     
@@ -124,7 +127,7 @@ while True:
         timestamp += 1
     last_timestamp = timestamp
     img, info = findFace(img, timestamp)
-    trackface(me, info, w, rotation_pid_controller, fb_pid_controller)
+    trackface(me, info, w, rotation_pid_controller, fb_pid_controller, ud_pid_controller)
     print("Area", info[1])
     print("Center", info[0])
     #print (error) Test condition
